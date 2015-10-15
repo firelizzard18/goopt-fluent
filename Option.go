@@ -1,11 +1,7 @@
 package goopt_fluent
 
-import (
-   "strings"
-   "errors"
-)
-
 type Option struct {
+   set *OptionSet
    group string
    help string
    
@@ -19,26 +15,9 @@ type Option struct {
    alternate *Option
 }
 
-func makeOption(group, help string) *Option {
-   o := new(Option)
-   o.group = group
-   o.help = help
-   
-   o.names = make([]string, 0, 1)
-   o.shortnames = ""
-   
-   o.validate = make([]Validator, 0, 1)
-   o.found = false
-   return o
-}
-
-
-
 type GetOption func(group string) (opt *Option, ok bool)
 type Validator func(opt *Option, get GetOption) (err error)
 type Processor func(opt *Option, input string) (err error)
-
-
 
 func (o *Option) Found() bool {
    for _, alt := range o.allAlternates() {
@@ -49,66 +28,30 @@ func (o *Option) Found() bool {
    return false
 }
 
-func (o *Option) allAlternates() []*Option {
-   return o.addAlternates(make([]*Option, 0, 2))
+func (o *Option) Names(names ...string) *Option {
+   o.names = append(o.names, names...)
+   return o
 }
 
-func (o *Option) addAlternates(alts []*Option) []*Option {
-   for _, alt := range alts {
-      if o == alt {
-         panic("There is a self-referencing loop of alternates")
-      }
+func (o *Option) ShortNames(names ...rune) *Option {
+   o.shortnames += string(names)
+   return o
+}
+
+func (o *Option) Validation(validators ...Validator) *Option {
+   if o.alternate != nil {
+      panic("Validation can only be defined at the end of the chain of alternates")
    }
    
-   alts = append(alts, o)
-   if o.alternate == nil {
-      return alts
+   o.validate = append(o.validate, validators...)
+   return o
+}
+
+func (o *Option) Process(processor Processor) *Option {
+   if o.process != nil {
+      panic("Processing has already been defined for this option")
    }
    
-   return o.alternate.addAlternates(alts)
-}
-
-func (o *Option) checkShort(short string) bool {
-   if short == "" {
-      return false
-   }
-   
-   return strings.ContainsAny(short, o.shortnames)
-}
-
-func (o *Option) checkLong(long string) bool {
-   if long == "" {
-      return false
-   }
-   for _, name := range o.names {
-      if name == long {
-         return true
-      }
-   }
-   return false
-}
-
-func (o *Option) process(short, long, arg string) (success bool, err error) {
-   success = false
-   for _, alt := range o.allAlternates() {
-      if alt.processor == nil {
-         panic("Options must have processors")
-      }
-      
-      if (!o.checkShort(short) && !o.checkLong(long)) {
-         continue
-      }
-      
-      if success == true {
-         err = errors.New("Only one of the alternates of '" + o.group + "' can be specified")
-         return
-      }
-      
-      alt.found = true
-      success = true
-      if err = alt.processor(alt, arg); err != nil {
-         return
-      }
-   }
-   return
+   o.processor = processor
+   return o
 }

@@ -18,7 +18,7 @@ func (o *Option) RequiredIfSpecified(otherOptGrp string) *Option {
    var other *Option
    var ok bool
    
-   if other, ok = options[otherOptGrp]; !ok {
+   if other, ok = o.set.opts[otherOptGrp]; !ok {
       panic("Option '" + otherOptGrp + "' has not been defined yet")
    }
    
@@ -44,7 +44,7 @@ func (o *Option) MutuallyExclusiveWith(required bool, otherOptGrps ...string) *O
       var ok bool
       var other *Option
       
-      if other, ok = options[id]; !ok {
+      if other, ok = o.set.opts[id]; !ok {
          panic("Option '" + id + "' has not been defined yet")
       }
       

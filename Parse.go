@@ -3,13 +3,14 @@ package goopt_fluent
 import (
    "errors"
    "strings"
+   "unicode/utf8"
 )
 
-var options = make(map[string]*Option)
+var Default = NewOptionSet()
 
-func Parse(args []string) ([]string, error) {
+func (s *OptionSet) Parse(args []string) ([]string, error) {
    opts := make(map[*Option]bool)
-   for _, opt := range options {
+   for _, opt := range s.opts {
       opts[opt] = false
    }
    
@@ -41,18 +42,18 @@ main:
          return args[last+1:], errors.New("Invalid empty option ('-')")
       }
       
-      shortName := '\0'
+      shortName := rune(0)
       longName := ""
       if arg[1] == '-' {
          longName = arg[2:]
       } else if len(arg) > 2 {
          return args[last+1:], errors.New("Invalid short-form option: '" + arg + "'")
       } else {
-         shortName = arg[1]
+         shortName, _ = utf8.DecodeRuneInString(arg[1:])
       }
       
       var optarg string
-      bits := strings.Split(longName, "=", 2)
+      bits := strings.SplitN(longName, "=", 2)
       if len(bits) == 2 {
          // --option=optarg
          longName = bits[0]
@@ -71,7 +72,7 @@ main:
             continue
          }
          
-         success, err := alt.process(shortName, longName, optarg)
+         success, err := opt.process(shortName, longName, optarg)
          if err != nil {
             return args[last + 1:], err
          }
@@ -81,7 +82,7 @@ main:
          }
          
          opts[opt] = true
-         last := i
+         last = i
          continue main
       }
       

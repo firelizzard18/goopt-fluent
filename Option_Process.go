@@ -119,7 +119,7 @@ func (o *Option) ProcessAsFile(ptr **os.File, create bool, errorh func (string, 
          *ptr, err = os.Open(input)
       }
       if (err != nil) {
-         err = errorh(err)
+         err = errorh(input, err)
       }
       return
    })
