@@ -10,6 +10,24 @@ func NewOptionSet() *OptionSet {
    return s
 }
 
+func MergeSets(a, b *OptionSet) *OptionSet {
+   s := new(OptionSet)
+   s.opts = make(map[string]*Option)
+   
+   for name, opt := range a.opts {
+      s.opts[name] = opt
+   }
+   
+   for name, opt := range a.opts {
+      if _, ok := s.opts[name]; ok {
+         panic("Cannot merge options sets with the same option groups")
+      }
+      s.opts[name] = opt
+   }
+   
+   return s
+}
+
 func (s *OptionSet) makeOption(group, help string) *Option {
    o := new(Option)
    o.set = s
