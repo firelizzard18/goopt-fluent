@@ -36,6 +36,8 @@ func (o *Option) AsFlag(def bool) *bool {
    if (alt != nil) {
       alt.ProcessAsFlag(flag, def)
    }
+   
+   o.MutuallyExclusiveWithAlternates(false)
    return flag
 }
 
@@ -59,6 +61,8 @@ func (o *Option) AsInt(def int) *int {
    for _, alt := range o.allAlternates() {
       alt.ProcessAsInt(val)
    }
+   
+   o.MutuallyExclusiveWithAlternates(false)
    return val
 }
 
@@ -78,6 +82,8 @@ func (o *Option) AsString(def string) *string {
    for _, alt := range o.allAlternates() {
       alt.ProcessAsString(val)
    }
+   
+   o.MutuallyExclusiveWithAlternates(false)
    return val
 }
 
@@ -103,6 +109,8 @@ func (o *Option) AsChoice(def string, choices ...string) *string {
    for _, alt := range o.allAlternates() {
       alt.ProcessAsChoice(val, choices...)
    }
+   
+   o.MutuallyExclusiveWithAlternates(false)
    return val
 }
 
@@ -118,7 +126,7 @@ func (o *Option) ProcessAsFile(ptr **os.File, create bool, errorh func (string, 
       } else {
          *ptr, err = os.Open(input)
       }
-      if (err != nil) {
+      if err != nil {
          err = errorh(input, err)
       }
       return
@@ -130,5 +138,7 @@ func (o *Option) AsFile(def *os.File, create bool, errorh func (string, error) e
    for _, alt := range o.allAlternates() {
       alt.ProcessAsFile(val, create, errorh)
    }
+   
+   o.MutuallyExclusiveWithAlternates(false)
    return val
 }

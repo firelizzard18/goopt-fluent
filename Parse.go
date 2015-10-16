@@ -89,5 +89,20 @@ main:
       return args[last + 1:], errors.New("Unrecognized option: '" + arg + "'")
    }
    
+   for opt, found := range opts {
+      if !found {
+         continue
+      }
+      
+      for _, alt := range opt.allAlternates() {
+         for _, validator := range alt.validate {
+            err := validator(alt, func (name string) (opt *Option, ok bool) { opt, ok = s.opts[name]; return })
+            if err != nil {
+               return args[last + 1:], err
+            }
+         }
+      }
+   }
+   
    return args[last + 1:], nil
 }

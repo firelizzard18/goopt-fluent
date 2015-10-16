@@ -5,13 +5,12 @@ import (
 )
 
 func (o *Option) Required() *Option {
-   o.Validation(func(o *Option, get GetOption) error {
+   return o.Validation(func(o *Option, get GetOption) error {
       if o.Found() {
          return nil
       }
       return errors.New("Option group '" + o.group + "' is required and was not specified")
    })
-   return o
 }
 
 func (o *Option) RequiredIfSpecified(otherOptGrp string) *Option {
@@ -22,7 +21,7 @@ func (o *Option) RequiredIfSpecified(otherOptGrp string) *Option {
       panic("Option '" + otherOptGrp + "' has not been defined yet")
    }
    
-   o.Validation(func(o *Option, get GetOption) error {
+   return o.Validation(func(o *Option, get GetOption) error {
       if o.Found() {
          return nil
       }
@@ -33,7 +32,24 @@ func (o *Option) RequiredIfSpecified(otherOptGrp string) *Option {
       
       return errors.New("Option '" + o.group + "' is required and was not specified")
    })
-   return o
+}
+
+func (o *Option) MutuallyExclusiveWithAlternates(required bool) *Option {
+   return o.Validation(func(o *Option, get GetOption) error {
+      count := 0
+      for _, alt := range o.allAlternates() {
+         if alt.found {
+            count++
+         }
+      }
+      if count == 0 && required {
+         return errors.New("One option of group '" + o.group + "' must be specified")
+      }
+      if count > 1 {
+         return errors.New("Only one option of group '" + o.group + "' may be specified")
+      }
+      return nil
+   })
 }
 
 func (o *Option) MutuallyExclusiveWith(required bool, otherOptGrps ...string) *Option {
@@ -51,7 +67,7 @@ func (o *Option) MutuallyExclusiveWith(required bool, otherOptGrps ...string) *O
       opts[i + 1] = other
    }
    
-   o.Validation(func(o *Option, get GetOption) error {
+   return o.Validation(func(o *Option, get GetOption) error {
       count := 0
       
       // count the number of options that were specicied
@@ -81,5 +97,4 @@ func (o *Option) MutuallyExclusiveWith(required bool, otherOptGrps ...string) *O
             return errors.New("More than one of options " + groups(" and ") + " were specified")
       }
    })
-   return o
 }
