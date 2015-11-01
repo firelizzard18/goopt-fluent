@@ -87,15 +87,15 @@ func (o *Option) AsString(def string) *string {
    return val
 }
 
-func (o *Option) ProcessAsChoice(ptr *string, choices ...string) *Option {
+func (o *Option) ProcessAsChoice(ptr *int, choices ...string) *Option {
    return o.Process(func (_ *Option, input string) error {
       if input == "" {
          return o.MissingArg()
       }
       
-      for _, choice := range choices {
+      for i, choice := range choices {
          if choice == input {
-            *ptr = input
+            *ptr = i
             return nil
          }
       }
@@ -104,7 +104,7 @@ func (o *Option) ProcessAsChoice(ptr *string, choices ...string) *Option {
    })
 }
 
-func (o *Option) AsChoice(def string, choices ...string) *string {
+func (o *Option) AsChoice(def int, choices ...string) *int {
    val := &def
    for _, alt := range o.allAlternates() {
       alt.ProcessAsChoice(val, choices...)
